@@ -9,41 +9,62 @@ export default function HomePage() {
     const [purchaseList, setPurchaseList] = useState([]);
     const [totalAmount, setTotalAmount] = useState(0);
 
-    const handleBarcodeChange = (e) => {
-        setBarcode(e.target.value);
+    // Function to open the camera and scan barcode
+    const openCamera = async () => {
+        try {
+            const barcodeData = await scanBarcodeWithCamera();
+            setBarcode(barcodeData);
+            searchProduct(barcodeData); // Automatically search product after scanning
+        } catch (error) {
+            console.error("バーコードの読み取りに失敗しました:", error);
+            alert("バーコードの読み取りに失敗しました");
+        }
     };
 
-    const searchProduct = async () => {
-      try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/search_product/${barcode}`);
-          if (!response.ok) {
-              throw new Error("商品情報を取得できませんでした");
-          }
-          const data = await response.json();
-          if (data.error) {
-              alert("商品が見つかりません");
-              setProduct(null);
-          } else {
-              setProduct(data);
-          }
-      } catch (error) {
-          console.error("エラー:", error);
-          alert("商品情報の取得に失敗しました");
-      }
-  };
+    // Example function to simulate scanning (replace this with actual scanning implementation)
+    const scanBarcodeWithCamera = () => {
+        return new Promise((resolve, reject) => {
+            // Logic to open the camera and scan the barcode goes here
+            setTimeout(() => {
+                const mockBarcode = "1234567890"; // Simulate a scanned barcode
+                resolve(mockBarcode);
+            }, 2000); // Simulate a delay
+        });
+    };
 
+    // Function to search for product based on barcode
+    const searchProduct = async (barcode) => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/search_product/${barcode}`);
+            if (!response.ok) {
+                throw new Error("商品情報を取得できませんでした");
+            }
+            const data = await response.json();
+            if (data.error) {
+                setProduct(null);
+                alert("商品がマスタ未登録です");
+            } else {
+                setProduct(data);
+            }
+        } catch (error) {
+            console.error("エラー:", error);
+            alert("商品情報の取得に失敗しました");
+        }
+    };
+
+    // Function to add product to purchase list
     const addToPurchaseList = () => {
         if (product) {
             const newItem = { ...product, quantity };
             setPurchaseList([...purchaseList, newItem]);
             setTotalAmount(totalAmount + product.price * quantity);
-            setProduct(null);
-            setBarcode("");
+            setProduct(null); // Clear product
+            setBarcode(""); // Clear barcode
         }
     };
 
     const handlePurchase = async () => {
-        const items = purchaseList.map(item => ({ code: barcode, quantity: item.quantity }));
+        const items = purchaseList.map(item => ({ code: item.code, quantity: item.quantity }));
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -57,21 +78,14 @@ export default function HomePage() {
 
     return (
         <div className="container mx-auto p-4 max-w-md bg-white shadow-lg rounded-lg">
-            <input
-                type="text"
-                value={barcode}
-                onChange={handleBarcodeChange}
-                placeholder="バーコードを入力"
-                className="w-full border border-gray-300 p-2 rounded-md text-black"
-            />
             <button
-                onClick={searchProduct}
+                onClick={openCamera}
                 className="w-full bg-blue-500 text-white py-2 mt-2 rounded-md"
             >
-                検索
+                スキャン（カメラ）
             </button>
 
-            {product && (
+            {product ? (
                 <div className="mt-4 p-4 bg-gray-100 rounded-md text-black">
                     <p className="font-bold text-lg">商品情報</p>
                     <p>商品名: {product.name}</p>
@@ -90,6 +104,8 @@ export default function HomePage() {
                         購入リストに追加
                     </button>
                 </div>
+            ) : (
+                <p className="text-red-500 mt-4">商品がマスタ未登録です</p>
             )}
 
             <div className="mt-4">
