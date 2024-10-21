@@ -21,25 +21,22 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Change directory to frontend/pos_app
-        run: cd frontend/pos_app
-
       - name: npm install, build, and test
+        working-directory: frontend/pos_app  # ここで正しいディレクトリを指定
         run: |
           npm install
           npm run build --if-present
           npm run test --if-present
 
       - name: Zip artifact for deployment
-        run: |
-          cd frontend/pos_app  
-          zip release.zip ./* -r
+        working-directory: frontend/pos_app  # 正しいディレクトリを指定
+        run: zip release.zip ./* -r
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: frontend/pos_app/release.zip
+          path: frontend/pos_app/release.zip  # パスを修正
 
   deploy:
     runs-on: ubuntu-latest
@@ -55,7 +52,7 @@ jobs:
           name: node-app
 
       - name: Unzip artifact for deployment
-        run: unzip frontend/pos_app/release.zip
+        run: unzip frontend/pos_app/release.zip  # パスを修正
       
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
@@ -63,5 +60,5 @@ jobs:
         with:
           app-name: 'tech0-gen-7-step4-studentwebapp-pos-1'
           slot-name: 'Production'
-          package: frontend/pos_app
+          package: frontend/pos_app  # デプロイ対象ディレクトリを修正
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_77C8023A2BAF4FEE81B74C42E988A763 }}
