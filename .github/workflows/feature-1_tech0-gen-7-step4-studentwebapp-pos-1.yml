@@ -29,15 +29,20 @@ jobs:
           npm run test --if-present
 
       - name: Copy artifact for deployment job
+        working-directory: pos_app  # pos_appディレクトリで実行する
         run: |
-          mkdir deploy
-          cp -r ./.next/standalone/. ./deploy
+          mkdir -p deploy/.next/static  # フォルダが存在しない場合に作成
+          if [ -d ".next/standalone" ]; then
+            cp -r .next/standalone/. ./deploy  # standaloneディレクトリがある場合のみコピー
+          else
+            echo "Warning: .next/standalone directory does not exist, skipping..."
+          fi
           cp -r ./public ./deploy
-          cp -r ./.next/static/. ./deploy/.next/static
+          cp -r .next/static/. ./deploy/.next/static
 
       - name: Zip artifact for deployment
         working-directory: pos_app  # pos_appディレクトリに変更
-        run: zip release.zip ./deploy -r  
+        run: zip -r ../release.zip ./deploy 
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
