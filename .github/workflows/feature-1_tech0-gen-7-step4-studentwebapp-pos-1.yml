@@ -37,7 +37,11 @@ jobs:
           else
             echo "Warning: .next/standalone directory does not exist, skipping..."
           fi
-          cp -r ./public ./deploy
+          if [ -d "./public" ]; then
+            cp -r ./public ./deploy  # publicディレクトリがある場合のみコピー
+          else
+            echo "Warning: public directory does not exist, skipping..."
+          fi
           cp -r .next/static/. ./deploy/.next/static
 
       - name: Zip artifact for deployment
